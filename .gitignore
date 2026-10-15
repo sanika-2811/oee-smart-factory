@@ -1,0 +1,21 @@
+# secrets / local config
+.env
+*.local
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+backend/models/*.pkl
+backend/models/model_meta.json
+
+# node
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# misc
+.DS_Store
+*.log
+docs/screenshots/_tmp/
