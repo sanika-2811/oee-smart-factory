@@ -267,14 +267,14 @@ card(s, LEFT, Inches(1.2), Inches(5.4), Inches(5.2), SOFT["yellow"], "Isolation 
     "• Score calibrated to **0–100 %**; threshold 85 %",
     "• Inference **≤ 36 ms** (target 200 ms)",
     "• Validation on injected faults: **6/6 detected, precision 100 %, 0 false alarms/h**",
-    "• ML outage → last score held, Red rules keep working"], size=15, title_size=18)
+    "• ML outage → last score held, Red rules keep working"], size=18, title_size=22)
 card(s, Inches(7.55), Inches(1.2), Inches(5.35), Inches(5.2), SOFT["orange"], "What-If projection  y = m·x + c", [
     "• Least-squares line through the last **3 min** of temperature",
     "• ETA = (limit − fit_now) ÷ m",
     "• **Orange** when ETA ≤ **60 s** (R² ≥ 0.6, slope ≥ 0.03 °C/s)",
     "• Dashboard draws points, fitted line, limit and countdown",
     "• Manual scenario: controlled 3-minute temperature rise (demo speed up to ×6)",
-    "• Measured: Orange raised with ETA 25 s, then Red at 85.1 °C"], size=15, title_size=18)
+    "• Measured: Orange raised with ETA 25 s, then Red at 85.1 °C"], size=18, title_size=22)
 
 # ======================================================================== 11 UI screenshots
 s = new_slide("Implementation – Dashboard Screens", "Real screenshots from the running application at 1440 pixels. Top left overview, top right machine grid with red orange and green, bottom left the machine detail with the "
@@ -321,11 +321,11 @@ text(s, LEFT, Inches(6.25), Inches(10.9), Inches(0.6), "Orange alert raised with
 # ======================================================================== 14 Advantages / limitations / applications
 s = new_slide("Advantages, Limitations & Applications", "Be balanced. Advantages: layered detection, explainable alerts, runs without infrastructure. Limitations: simulated data, one-off training, basic auth. Applications: monitoring, teaching, model test-bench.")
 card(s, LEFT, Inches(1.2), Inches(3.5), Inches(5.3), SOFT["green"], "Advantages", [
-    "• 3 detection layers", "• Explainable alerts", "• Works with no DB / Docker", "• Operator workflow + audit", "• Tested and documented API"], size=15, title_size=18)
+    "• 3 detection layers", "• Explainable alerts", "• Works with no DB / Docker", "• Operator workflow + audit", "• Tested and documented API"], size=19, title_size=22)
 card(s, Inches(5.55), Inches(1.2), Inches(3.55), Inches(5.3), SOFT["orange"], "Limitations", [
-    "• Simulated telemetry", "• Model trained once (C-04)", "• Single-tenant Basic auth", "• Linear What-If assumption", "• 2D, desktop-responsive web app"], size=15, title_size=18)
+    "• Simulated telemetry", "• Model trained once (C-04)", "• Single-tenant Basic auth", "• Linear What-If assumption", "• 2D, desktop-responsive web app"], size=19, title_size=22)
 card(s, Inches(9.25), Inches(1.2), Inches(3.65), Inches(5.3), SOFT["blue"], "Applications", [
-    "• OEE & condition monitoring", "• Industry 4.0 teaching lab", "• Anomaly-model test bench", "• Pilot for real PLC gateways"], size=15, title_size=18)
+    "• OEE & condition monitoring", "• Industry 4.0 teaching lab", "• Anomaly-model test bench", "• Pilot for real PLC gateways"], size=19, title_size=22)
 
 # ======================================================================== 15 Conclusion, future scope, references
 s = new_slide("Conclusion, Future Scope & References", "Conclusion: the system meets the SRS targets with measured evidence. Future: real equipment via OPC UA, use feedback to retrain, roles and notifications, non-linear RUL. References are in the report.")

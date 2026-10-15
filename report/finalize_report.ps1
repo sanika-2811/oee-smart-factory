@@ -1,5 +1,5 @@
-# Updates all fields (TOC page numbers) with Microsoft Word, saves the .docx and exports a PDF.
-#   powershell -ExecutionPolicy Bypass -File reportinalize_report.ps1
+﻿# Updates all fields (TOC page numbers) with Microsoft Word, saves the .docx and exports a PDF.
+#   powershell -ExecutionPolicy Bypass -File report\finalize_report.ps1
 $ErrorActionPreference = "Stop"
 $dir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $name = "OEE_Smart_Factory_Project_Report"
@@ -12,20 +12,17 @@ $word = New-Object -ComObject Word.Application
 $word.Visible = $false
 $word.DisplayAlerts = 0
 try {
-    Write-Host "opening ..."
     $doc = $word.Documents.Open($docx, $false, $false, $false)
-    Write-Host "opened; updating fields ..."
     $doc.Fields.Update() | Out-Null
     $pages = $doc.ComputeStatistics(2)
-    Write-Host "pages (total, incl. front matter): $pages"
     $doc.Fields.Update() | Out-Null
     $doc.Save()
-    Write-Host "exporting PDF ..."
-    $doc.ExportAsFixedFormat($pdf, 17)
+    Copy-Item $docx (Join-Path $dir "$name.docx") -Force          # keep the field-updated docx even if PDF export stalls
+    Write-Host "pages (total, incl. front matter): $pages ; docx saved"
+    $doc.SaveAs2($pdf, 17)
     $doc.Close($false)
 } finally {
     $word.Quit()
 }
-Copy-Item $docx (Join-Path $dir "$name.docx") -Force
 Copy-Item $pdf (Join-Path $dir "$name.pdf") -Force
 Write-Host "done"
