@@ -88,7 +88,7 @@ function UserChip() {
   }
   return (
     <button className="btn sm" onClick={() => auth.logout()} title="Sign out" aria-label={`Signed in as ${user.username}. Sign out`}>
-      <Icon name="logout" />{user.username}
+      <Icon name="logout" />{user.username}<span className="faint" style={{ fontWeight: 500 }}>· {user.role.replace(/_/g, ' ')}</span>
     </button>
   )
 }
@@ -106,6 +106,22 @@ export function TopBar({ title, sub, children }: { title: string; sub?: ReactNod
       <ThemeToggle />
       <UserChip />
     </header>
+  )
+}
+
+/* ------------------------------------------------------------------ offline banner */
+export function OfflineBanner() {
+  const conn = useStore((s) => s.conn)
+  const last = useStore((s) => s.lastMessageAt)
+  const [, force] = useState(0)
+  useEffect(() => { const t = window.setInterval(() => force((n) => n + 1), 1000); return () => window.clearInterval(t) }, [])
+  if (conn === 'live' || (conn === 'connecting' && !last)) return null
+  const secs = last ? Math.round((Date.now() - last) / 1000) : null
+  return (
+    <div className="err" role="alert" style={{ marginBottom: 12, display: 'flex', gap: 10, alignItems: 'center' }}>
+      <Icon name="octagon" size={18} />
+      <span><b>Live data paused.</b> The dashboard cannot reach the backend{secs !== null ? ` (last update ${secs} s ago)` : ''}. It reconnects automatically — figures on screen may be out of date.</span>
+    </div>
   )
 }
 
@@ -146,9 +162,18 @@ export function LoginModal() {
   useEffect(() => loginDialog.subscribe(setOpen), [])
   useEffect(() => {
     if (!open) return
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && loginDialog.close()
+    const prev = document.activeElement as HTMLElement | null
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') return loginDialog.close()
+      if (e.key !== 'Tab') return
+      const nodes = Array.from(document.querySelectorAll<HTMLElement>('.modal input, .modal button, .modal select')).filter((n) => !n.hasAttribute('disabled'))
+      if (!nodes.length) return
+      const first = nodes[0], last = nodes[nodes.length - 1]
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus() }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus() }
+    }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => { window.removeEventListener('keydown', onKey); prev?.focus() }
   }, [open])
   if (!open) return null
 

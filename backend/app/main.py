@@ -109,6 +109,9 @@ async def lifespan(app: FastAPI):
         c.source = DirectSource(engine, s, factory)
     await c.source.start()
     c.tasks.append(asyncio.create_task(tick_loop(c), name="tick"))
+    if s.demo_hints:
+        log.warning("DEMO_HINTS=true: demo logins are shown on the sign-in form. Set DEMO_HINTS=false and change USERS in .env "
+                    "before exposing this service to anyone else.")
     log.info("ready: %d machines | ingest=%s | storage=%s | ml=%s", len(profiles), s.ingest_mode, repo.mode, scorer.ready)
     try:
         yield
@@ -131,6 +134,17 @@ _cors = get_settings().cors_origins
 app.add_middleware(CORSMiddleware, allow_origins=[o.strip() for o in _cors.split(",")], allow_methods=["*"],
                    allow_headers=["*"], allow_credentials=False)
 app.include_router(router)
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    resp = await call_next(request)
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
+    resp.headers.setdefault("Referrer-Policy", "no-referrer")
+    resp.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    resp.headers.setdefault("Cache-Control", "no-store")
+    return resp
 
 
 @app.exception_handler(Exception)

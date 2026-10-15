@@ -1,6 +1,5 @@
 import { memo } from 'react'
 import { fmtNum, fmtInt, scoreBand } from '../lib/format'
-import { LEVELS } from '../lib/levels'
 import { go } from '../lib/router'
 import type { HistPoint } from '../lib/store'
 import type { MachineLive, WindowKey } from '../lib/types'
@@ -26,8 +25,8 @@ function MachineTileImpl({ m, hist, window, threshold, compact }: Props) {
       type="button"
       className={`tile lv-${level} ${m.online ? '' : 'offline'}`}
       onClick={() => go(`/machines/${m.id}`)}
-      aria-label={`${m.name}, ${LEVELS[level].label}, ${m.status}, temperature ${fmtNum(m.temperature)} degrees, OEE ${fmtNum(oee.oee)} percent. Open details.`}
     >
+      <span className="sr-only">Open details for {m.name}. </span>
       <div className="head">
         <div style={{ minWidth: 0, flex: 1 }}>
           <div className="name">{m.name}</div>
@@ -54,7 +53,7 @@ function MachineTileImpl({ m, hist, window, threshold, compact }: Props) {
       </div>
       {!compact && <div className="spark"><Sparkline values={temps} threshold={m.thresholds.temp_limit} /></div>}
       <div className="reason" aria-live="polite">
-        {m.reason ?? (m.online ? '' : 'Waiting for telemetry…')}
+        {m.reason ?? (m.online ? '' : m.age_ms !== null ? `No data for ${Math.round(m.age_ms / 1000)} s` : 'Waiting for telemetry…')}
         {m.whatif.projected && m.whatif.eta_s !== null && ` · hits ${m.thresholds.temp_limit.toFixed(0)} °C in ${Math.round(m.whatif.eta_s)} s`}
       </div>
       <div className="foot">

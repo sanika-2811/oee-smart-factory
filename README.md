@@ -41,7 +41,7 @@ Databases are **off by default**. To have Compose run them too: `docker compose 
 | `ws://localhost:8000/ws/live` | 500 ms live snapshot |
 | <http://localhost:8000/metrics> | latency, inference time, WS clients, MQTT status |
 
-**Sign in** (top right) with a demo account to make changes: `manager / manager123`, `engineer / engineer123`, `analyst / analyst123`, `admin / admin123` (set in `.env`, `USERS=`). Reading is open to everyone.
+**Sign in** (top right) with a demo account to make changes: `manager / manager123`, `engineer / engineer123`, `analyst / analyst123`, `admin / admin123` (set in `.env`, `USERS=`). Reading is open to everyone. **Roles:** floor manager and administrator can do everything; maintenance engineer can acknowledge/resolve alerts, give feedback and log maintenance; production analyst is read-only. Five wrong passwords lock a login for 60 s. Set `DEMO_HINTS=false` and change `USERS` before sharing the app with anyone.
 
 ## Demo script (≈ 3 minutes)
 1. Open **Control**, sign in as `manager`.
@@ -62,7 +62,7 @@ Databases are **off by default**. To have Compose run them too: `docker compose 
 `INGEST_MODE=mqtt|direct` (direct = simulator inside the backend, zero infrastructure) and `STORAGE_MODE=memory|db` are plain `.env` switches. See `report/figures/` for the UML and architecture diagrams.
 
 ## Databases (manual setup)
-Follow `docs/DATABASE_MANUAL_SETUP_GUIDE.md`, then:
+Follow **`docs/DB_SETUP_STEP_BY_STEP.md`** (checkpoints after every step; Docker *or* native Windows install) or the original `docs/DATABASE_MANUAL_SETUP_GUIDE.md`, then:
 ```bash
 cd backend && python -m app.storage.verify      # writes/reads a test row + test point, tells you what is missing
 # set STORAGE_MODE=db in .env and restart the backend
@@ -71,10 +71,12 @@ cd backend && python -m app.storage.verify      # writes/reads a test row + test
 
 ## Tests
 ```bash
-cd backend && python -m pytest -q          # 28 tests: OEE, rules, What-If, ML, alerts, auth, API, WebSocket
+cd backend && python -m pytest -q          # 38 tests: OEE, rules, What-If, ML, alerts, auth + roles + throttling, API, WebSocket, DB layer (fake clients)
 cd frontend && npm run build && npm test   # type-check + production build + 7 Vitest tests
 python scripts/smoke_test.py               # end-to-end: 5 machines, OEE, Orange->Red, Yellow, latency, inference, 50 WS clients
 python scripts/mqtt_resilience_test.py     # real MQTT path, broker killed and restarted (reconnect <= 5 s)
+python scripts/a11y_audit.py               # axe-core WCAG 2 A/AA audit of every page (dark + light, desktop + phone)
+python scripts/crossbrowser_check.py       # every page in Chromium / WebKit / Firefox: live data, no console errors, no overflow
 ```
 Last measured results are in the report (Chapter 4). `python scripts/screenshots.py --mobile` regenerates all screenshots.
 

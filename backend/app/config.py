@@ -30,7 +30,8 @@ class Settings(BaseSettings):
     tick_ms: int = 500
     log_level: str = "INFO"
     log_json: bool = False
-    cors_origins: str = "*"
+    cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
+    max_ws_clients: int = 200
     backfill_days: float = 7.0           # simulated history used for 1h/8h windows and reports
     sim_seed: int | None = None
     ingest_api_key: str = ""             # optional key for POST /telemetry

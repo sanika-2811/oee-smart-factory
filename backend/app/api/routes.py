@@ -9,7 +9,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, WebSocket
 
-from ..core.auth import User, require_user
+from ..core.auth import CONTROL, OPERATE, User, require_roles, require_user
 from ..schemas import (AssignIn, ClearFaultIn, FeedbackIn, InjectFaultIn, MaintenanceIn, MaintenancePatch, OutageIn,
                        ResolveIn, SpeedIn, TelemetryIn)
 
@@ -118,7 +118,7 @@ async def telemetry(machine_id: str, request: Request,
 
 @router.put("/machines/{machine_id}/thresholds", tags=["machines"], summary="Change hard limits (auth)")
 async def thresholds(machine_id: str, request: Request, temp_limit: float | None = Query(None, gt=0, le=500),
-                     vib_limit: float | None = Query(None, gt=0, le=100), user: User = Depends(require_user)):
+                     vib_limit: float | None = Query(None, gt=0, le=100), user: User = Depends(require_roles(*CONTROL))):
     c = ctx(request)
     _machine(c, machine_id)
     return c.engine.set_thresholds(machine_id, temp_limit, vib_limit)
@@ -168,28 +168,28 @@ async def alert(alert_id: int, request: Request):
 
 
 @router.post("/alerts/{alert_id}/ack", tags=["alerts"], summary="Acknowledge an alarm (auth)")
-async def ack(alert_id: int, request: Request, user: User = Depends(require_user)):
+async def ack(alert_id: int, request: Request, user: User = Depends(require_roles(*OPERATE))):
     c = ctx(request)
     _alert_or_404(c, alert_id)
     return c.engine.alerts.acknowledge(alert_id, user.username).to_dict()
 
 
 @router.post("/alerts/{alert_id}/assign", tags=["alerts"], summary="Assign a (virtual) technician (auth)")
-async def assign(alert_id: int, body: AssignIn, request: Request, user: User = Depends(require_user)):
+async def assign(alert_id: int, body: AssignIn, request: Request, user: User = Depends(require_roles(*OPERATE))):
     c = ctx(request)
     _alert_or_404(c, alert_id)
     return c.engine.alerts.assign(alert_id, body.technician, user.username).to_dict()
 
 
 @router.post("/alerts/{alert_id}/resolve", tags=["alerts"], summary="Close an issue with resolution notes (auth)")
-async def resolve(alert_id: int, body: ResolveIn, request: Request, user: User = Depends(require_user)):
+async def resolve(alert_id: int, body: ResolveIn, request: Request, user: User = Depends(require_roles(*OPERATE))):
     c = ctx(request)
     _alert_or_404(c, alert_id)
     return c.engine.alerts.resolve(alert_id, user.username, body.notes).to_dict()
 
 
 @router.post("/alerts/{alert_id}/feedback", tags=["alerts"], summary="ML accuracy feedback: true / false positive (auth)")
-async def feedback(alert_id: int, body: FeedbackIn, request: Request, user: User = Depends(require_user)):
+async def feedback(alert_id: int, body: FeedbackIn, request: Request, user: User = Depends(require_roles(*OPERATE))):
     c = ctx(request)
     _alert_or_404(c, alert_id)
     return c.engine.alerts.feedback(alert_id, user.username, body.verdict, body.comment).to_dict()
@@ -209,7 +209,7 @@ async def maintenance_list(request: Request, machine_id: str | None = None, aler
 
 
 @router.post("/maintenance", tags=["maintenance"], status_code=201, summary="Log a maintenance action (auth)")
-async def maintenance_create(body: MaintenanceIn, request: Request, user: User = Depends(require_user)):
+async def maintenance_create(body: MaintenanceIn, request: Request, user: User = Depends(require_roles(*OPERATE))):
     c = ctx(request)
     _machine(c, body.machine_id)
     if body.alert_id is not None:
@@ -220,7 +220,7 @@ async def maintenance_create(body: MaintenanceIn, request: Request, user: User =
 
 
 @router.patch("/maintenance/{rec_id}", tags=["maintenance"], summary="Update / close a record (auth)")
-async def maintenance_patch(rec_id: int, body: MaintenancePatch, request: Request, user: User = Depends(require_user)):
+async def maintenance_patch(rec_id: int, body: MaintenancePatch, request: Request, user: User = Depends(require_roles(*OPERATE))):
     c = ctx(request)
     if rec_id not in c.engine.maintenance:
         raise HTTPException(404, f"Maintenance record #{rec_id} was not found.")
@@ -228,7 +228,7 @@ async def maintenance_patch(rec_id: int, body: MaintenancePatch, request: Reques
 
 
 @router.delete("/maintenance/{rec_id}", tags=["maintenance"], status_code=204, summary="Delete a record (auth)")
-async def maintenance_delete(rec_id: int, request: Request, user: User = Depends(require_user)):
+async def maintenance_delete(rec_id: int, request: Request, user: User = Depends(require_roles(*OPERATE))):
     c = ctx(request)
     if rec_id not in c.engine.maintenance:
         raise HTTPException(404, f"Maintenance record #{rec_id} was not found.")
@@ -251,7 +251,7 @@ async def sim_status(request: Request):
 
 
 @router.post("/simulator/inject-fault", tags=["simulator"], summary="Inject a demo fault (auth)")
-async def inject(body: InjectFaultIn, request: Request, user: User = Depends(require_user)):
+async def inject(body: InjectFaultIn, request: Request, user: User = Depends(require_roles(*CONTROL))):
     c = ctx(request)
     _machine(c, body.machine_id)
     info = _control(c, c.source.inject, body.machine_id, body.kind, body.duration_s)
@@ -259,14 +259,14 @@ async def inject(body: InjectFaultIn, request: Request, user: User = Depends(req
 
 
 @router.post("/simulator/clear", tags=["simulator"], summary="Clear injected faults (auth)")
-async def sim_clear(body: ClearFaultIn, request: Request, user: User = Depends(require_user)):
+async def sim_clear(body: ClearFaultIn, request: Request, user: User = Depends(require_roles(*CONTROL))):
     c = ctx(request)
     _control(c, c.source.clear, body.machine_id)
     return {"cleared": body.machine_id or "all"}
 
 
 @router.post("/simulator/speed", tags=["simulator"], summary="Fault time-compression for demos (auth)")
-async def sim_speed(body: SpeedIn, request: Request, user: User = Depends(require_user)):
+async def sim_speed(body: SpeedIn, request: Request, user: User = Depends(require_roles(*CONTROL))):
     c = ctx(request)
     _control(c, c.source.set_speed, body.factor)
     return {"time_scale": body.factor}
@@ -280,7 +280,7 @@ async def whatif(machine_id: str, request: Request):
 
 
 @router.post("/whatif/{machine_id}/run", tags=["what-if"], summary="Start the 3-minute degradation scenario (auth)")
-async def whatif_run(machine_id: str, request: Request, user: User = Depends(require_user)):
+async def whatif_run(machine_id: str, request: Request, user: User = Depends(require_roles(*CONTROL))):
     c = ctx(request)
     _machine(c, machine_id)
     info = _control(c, c.source.inject, machine_id, "temp_ramp", None)
@@ -288,7 +288,7 @@ async def whatif_run(machine_id: str, request: Request, user: User = Depends(req
 
 
 @router.post("/ml/outage", tags=["ml"], summary="Simulate an ML service outage (auth) - demonstrates NFR-R1")
-async def ml_outage(body: OutageIn, request: Request, user: User = Depends(require_user)):
+async def ml_outage(body: OutageIn, request: Request, user: User = Depends(require_roles(*CONTROL))):
     c = ctx(request)
     c.scorer.outage = body.enabled
     return {"ml_outage": body.enabled}
@@ -322,6 +322,9 @@ async def report_ml(request: Request):
 @router.websocket("/ws/live")
 async def ws_live(ws: WebSocket):
     c = ws.app.state.ctx
+    if c.ws.count >= c.settings.max_ws_clients:
+        await ws.close(code=1013)          # try again later: connection cap protects the 500 ms loop
+        return
     hello = json.dumps({"type": "hello", "tick_ms": c.settings.tick_ms, "server_ts": time.time()})
     # greet + send the latest snapshot immediately (no waiting for the next tick)
     await c.ws.handle(ws, hello, *([c.last_snapshot_text] if c.last_snapshot_text else []))

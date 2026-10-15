@@ -116,3 +116,31 @@ def test_metrics_and_websocket(client):
         assert {"oee", "anomaly_score", "level"} <= set(snaps[0]["machines"][0])
     m = client.get("/metrics").json()
     assert m["inference_ms"]["max"] is None or m["inference_ms"]["max"] < 200
+
+
+# ---------------------------------------------------------------- roles, throttling, headers
+def test_role_permissions(client):
+    analyst, engineer = ("analyst", "analyst123"), ("engineer", "engineer123")
+    r = client.post("/maintenance", auth=analyst, json={"machine_id": "CNC-01", "action": "Check belt"})
+    assert r.status_code == 403 and "Production Analyst" in r.json()["detail"]
+    assert client.post("/alerts/1/ack", auth=analyst).status_code == 403
+    r = client.post("/simulator/inject-fault", auth=engineer, json={"machine_id": "CNC-01", "kind": "stop"})
+    assert r.status_code == 403
+    assert client.put("/machines/CNC-01/thresholds?temp_limit=86", auth=engineer).status_code == 403
+    ok = client.post("/maintenance", auth=engineer, json={"machine_id": "CNC-01", "action": "Check belt"})
+    assert ok.status_code == 201
+    client.delete(f"/maintenance/{ok.json()['id']}", auth=engineer)
+
+
+def test_login_throttle_locks_after_repeated_failures(client):
+    for _ in range(5):
+        assert client.post("/auth/login", auth=("admin", "nope")).status_code == 401
+    r = client.post("/auth/login", auth=("admin", "nope"))
+    assert r.status_code == 429 and "Retry-After" in r.headers
+    assert client.post("/auth/login", auth=("admin", "admin123")).status_code == 429   # still locked for this user
+    assert client.post("/auth/login", auth=("manager", "manager123")).status_code == 200  # other users unaffected
+
+
+def test_security_headers(client):
+    h = client.get("/health").headers
+    assert h["x-content-type-options"] == "nosniff" and h["x-frame-options"] == "DENY"

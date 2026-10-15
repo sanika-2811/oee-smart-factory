@@ -153,7 +153,7 @@ export default function Overview() {
       <div className="grid g-2">
         <section className="card">
           <CardHeader title={`OEE by machine · ${win}`} icon="chart" />
-          <div className="chart" style={{ height: Math.max(180, snap.machines.length * 34 + 30) }}><Bar data={barData} options={barOpts} /></div>
+          <div className="chart" style={{ height: Math.max(180, snap.machines.length * 34 + 30) }}><Bar data={barData} options={barOpts} role="img" aria-label={`OEE by machine, ${win} window: ` + snap.machines.map((m) => `${m.id} ${m.oee[win].oee.toFixed(0)} percent`).join(', ')} /></div>
         </section>
         <section className="card">
           <CardHeader title="Latest alerts" icon="bell"><a className="btn sm ghost" href="#/alerts">Open alert centre →</a></CardHeader>
