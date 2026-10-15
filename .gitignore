@@ -19,3 +19,8 @@ frontend/dist/
 .DS_Store
 *.log
 docs/screenshots/_tmp/
+
+presentation/_render/
+presentation/_tpl/
+presentation/_crops/
+report/figures/crops/

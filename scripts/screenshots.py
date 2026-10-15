@@ -64,10 +64,11 @@ def main() -> None:
         def shot(name: str, route: str, wait: float = 1.8, full: bool = False, pre=None) -> None:
             for sz, pg in pages.items():
                 pg.goto(f"{APP}/#{route}")
+                pg.add_style_tag(content=".toasts{display:none !important}")
                 pg.wait_for_timeout(int(wait * 1000))
                 if pre:
                     pre(pg)
-                pg.screenshot(path=str(out / f"{sz}_{name}.png"), full_page=full)
+                pg.screenshot(path=str(out / f"{sz}_{name}.png"), full_page=full and sz == "desktop")
                 print("saved", out / f"{sz}_{name}.png")
 
         # ---- calm state
@@ -119,6 +120,7 @@ def main() -> None:
         if "desktop" in pages:
             pg = pages["desktop"]
             pg.goto(f"{APP}/#/overview")
+            pg.add_style_tag(content=".toasts{display:none !important}")
             pg.wait_for_timeout(1500)
             pg.click("button[aria-label^='Switch to light']")
             pg.wait_for_timeout(1200)

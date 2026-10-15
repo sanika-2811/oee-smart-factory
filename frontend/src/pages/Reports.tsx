@@ -119,7 +119,7 @@ export default function Reports() {
                   <dt>Sample recall</dt><dd>{fmtNum(m.offline_validation.sample_recall * 100, 1)}%</dd>
                   <dt>Faults detected</dt><dd>{m.offline_validation.faults_detected} / {m.offline_validation.faults_injected}</dd>
                   <dt>False alarms / h (healthy)</dt><dd>{fmtNum(m.offline_validation.false_alarm_samples_per_hour_on_healthy_machines, 2)}</dd>
-                  <dt>Model</dt><dd>{m.model.algorithm?.split(',')[0] ?? '—'}</dd>
+                  <dt>Model</dt><dd>{m.model.algorithm ? 'Isolation Forest' : '—'}</dd>
                   <dt>Trained on</dt><dd>{m.model.training_rows?.toLocaleString() ?? '—'} rows</dd>
                 </dl>
               ) : <span className="muted">No validation metrics stored with this model.</span>}
