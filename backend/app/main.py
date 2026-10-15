@@ -83,6 +83,8 @@ async def lifespan(app: FastAPI):
     scorer = AnomalyScorer(s.model_path)
     await asyncio.to_thread(scorer.load)
     engine = Engine(s, repo, scorer, profiles)
+    repo.sync_machines(engine.machine_info())
+    repo.save_model_info(scorer.meta)
     await asyncio.to_thread(engine.load_persisted)
     users = UserStore(s.users)
     app.state.users = users
