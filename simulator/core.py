@@ -144,8 +144,8 @@ class MachineSim:
         elif self.status == "RUNNING":
             if rng.random() < p.microstop_per_hour * dt / 3600.0:
                 self.status, self.status_until = "IDLE", ts + rng.uniform(3.0, 11.0)
-            elif self.random_events and rng.random() < dt / (20 * 3600.0):
-                self.status, self.status_until = "STOPPED", ts + rng.uniform(240.0, 1500.0)
+            elif self.random_events and rng.random() < dt / (36 * 3600.0):
+                self.status, self.status_until = "STOPPED", ts + rng.uniform(180.0, 720.0)
 
         # ---- thermal + vibration dynamics
         tau = {"RUNNING": 25.0, "IDLE": 40.0, "STOPPED": 160.0}[self.status]

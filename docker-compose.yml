@@ -1,0 +1,115 @@
+# One command:   docker compose up --build        then open http://localhost:5173
+#
+# Services : mosquitto (MQTT broker) -> simulator (publishes telemetry) -> backend (FastAPI) -> frontend (nginx + React)
+# Databases: NOT started by default. Either create them manually (DATABASE_MANUAL_SETUP_GUIDE.md) and set
+#            STORAGE_MODE=db in .env, or let Compose run them for you:  docker compose --profile db up --build
+name: oee-smart-factory
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    ports:
+      - "1883:1883"   # MQTT over TCP
+      - "9001:9001"   # MQTT over WebSockets (SRS)
+    volumes:
+      - ./deploy/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+
+  simulator:
+    build:
+      context: .
+      dockerfile: simulator/Dockerfile
+    restart: unless-stopped
+    depends_on: [mosquitto]
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: "9001"
+      MQTT_TRANSPORT: websockets
+      MACHINE_COUNT: ${MACHINE_COUNT:-5}
+      SIM_SEED: ${SIM_SEED:-}
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on: [mosquitto]
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      INGEST_MODE: mqtt
+      MQTT_HOST: mosquitto
+      MQTT_PORT: "9001"
+      MQTT_TRANSPORT: websockets
+      MACHINE_COUNT: ${MACHINE_COUNT:-5}
+      STORAGE_MODE: ${STORAGE_MODE:-memory}
+      # databases created manually on the host are reached through host.docker.internal
+      INFLUX_URL: ${INFLUX_URL_DOCKER:-http://host.docker.internal:8086}
+      POSTGRES_HOST: ${POSTGRES_HOST_DOCKER:-host.docker.internal}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8000:8000"   # REST + WebSocket + /docs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 4s
+      retries: 10
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    depends_on: [backend]
+    ports:
+      - "5173:80"
+
+  # ------------------------------------------------------------------ optional databases (profile "db")
+  postgres:
+    profiles: ["db"]
+    image: postgres:14
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-oee_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMe123}
+      POSTGRES_DB: ${POSTGRES_DB:-oee_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - oee_pgdata:/var/lib/postgresql/data
+      - ./db/postgres_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+
+  influxdb:
+    profiles: ["db"]
+    image: influxdb:2.7
+    restart: unless-stopped
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUX_ADMIN_PASSWORD:-ChangeMe12345}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUX_ORG:-oee-org}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUX_BUCKET_RAW:-telemetry_raw}
+      DOCKER_INFLUXDB_INIT_RETENTION: 30d
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUX_TOKEN:-oee-super-secret-token}
+    ports:
+      - "8086:8086"
+    volumes:
+      - oee_influxdata:/var/lib/influxdb2
+
+  influx-buckets:
+    profiles: ["db"]
+    image: influxdb:2.7
+    depends_on: [influxdb]
+    restart: "no"
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        sleep 8;
+        influx bucket create -n ${INFLUX_BUCKET_AGG:-telemetry_agg} -o ${INFLUX_ORG:-oee-org} -r 365d
+        --host http://influxdb:8086 -t ${INFLUX_TOKEN:-oee-super-secret-token} || true
+
+volumes:
+  oee_pgdata:
+  oee_influxdata:

@@ -81,6 +81,10 @@ class AlertManager:
         top = max((LEVEL_RANK[c.level] for c in conditions), default=0)
         wanted = {c.kind: c for c in conditions if LEVEL_RANK[c.level] == top}
 
+        # level of the highest alert that is actually open right now (a lower alert is only
+        # superseded once the higher one has opened - no flash of green while escalating)
+        open_rank = max((LEVEL_RANK[self.alerts[t.alert_id].level] for (m, _k), t in self._tracks.items()
+                         if m == machine_id and t.alert_id is not None), default=0)
         # tracks for this machine
         kinds = {k for (m, k) in self._tracks if m == machine_id} | set(wanted)
         for kind in kinds:
@@ -98,7 +102,7 @@ class AlertManager:
                 tr.streak = 0
                 if tr.alert_id is not None:
                     # a higher level alert took over -> close right away, otherwise debounce
-                    superseded = top > 0 and tr.cond is not None and LEVEL_RANK[tr.cond.level] < top
+                    superseded = tr.cond is not None and open_rank > LEVEL_RANK[tr.cond.level]
                     if tr.absent_since is None:
                         tr.absent_since = now
                     level = tr.cond.level if tr.cond else "red"
