@@ -88,7 +88,7 @@ function UserChip() {
   }
   return (
     <button className="btn sm" onClick={() => auth.logout()} title="Sign out" aria-label={`Signed in as ${user.username}. Sign out`}>
-      <Icon name="logout" />{user.username}<span className="faint" style={{ fontWeight: 500 }}>· {user.role.replace(/_/g, ' ')}</span>
+      <Icon name="logout" />{user.username}
     </button>
   )
 }

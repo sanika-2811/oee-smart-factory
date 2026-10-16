@@ -6,7 +6,6 @@ import { palette } from '../lib/chartSetup'
 import { api } from '../lib/api'
 import { fmtNum } from '../lib/format'
 import { useStore } from '../lib/store'
-import { downloadCsv } from '../lib/csv'
 import { usePoll } from '../hooks/hooks'
 
 interface OeeTrend { series: { date: string; oee: number; availability: number; performance: number; quality: number }[]; note: string | null; timezone: string }
@@ -67,9 +66,7 @@ export default function Reports() {
 
       <div className="grid g-2">
         <section className="card" aria-label="OEE trend">
-          <CardHeader title="Daily OEE · last 7 days" icon="chart">
-            <button className="btn sm" disabled={!t?.series.length} onClick={() => t && downloadCsv('oee_7_days.csv', [['date', 'oee_pct', 'availability_pct', 'performance_pct', 'quality_pct'], ...t.series.map((r) => [r.date, r.oee, r.availability, r.performance, r.quality])])}>Export CSV</button>
-          </CardHeader>
+          <CardHeader title="Daily OEE · last 7 days" icon="chart" />
           <div className="chart">{trend.loading && !t ? <Skeleton h={260} /> : trend.error ? <div className="err">{trend.error}</div> : t && t.series.length ? <Line data={lineData!} options={lineOpts} role="img" aria-label="Daily OEE for the last seven days" /> : <Empty title="No history yet" />}</div>
           {t && t.series.length > 0 && (
             <table className="tbl" style={{ marginTop: 12 }}>
@@ -82,9 +79,7 @@ export default function Reports() {
         </section>
 
         <section className="card" aria-label="Downtime per shift">
-          <CardHeader title="Downtime per shift · last 7 days" icon="clock">
-            <button className="btn sm" disabled={!d?.rows.length} onClick={() => d && downloadCsv('downtime_per_shift.csv', [['date', 'shift', 'downtime_min', 'stopped_min', 'idle_min'], ...d.rows.map((r) => [r.date, r.shift, r.downtime_min, r.stopped_min, r.idle_min])])}>Export CSV</button>
-          </CardHeader>
+          <CardHeader title="Downtime per shift · last 7 days" icon="clock" />
           <div className="chart">{down.loading && !d ? <Skeleton h={260} /> : down.error ? <div className="err">{down.error}</div> : d && d.rows.length ? <Bar data={barData!} options={barOpts} role="img" aria-label="Downtime minutes per shift per day" /> : <Empty title="No downtime data" />}</div>
           {d && (
             <div className="grid g-3" style={{ marginTop: 12 }}>

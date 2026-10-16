@@ -56,7 +56,7 @@
   --text: #0f172a;
   --muted: #475569;
   --faint: #64748b;
-  --accent: #0e7490;
+  --accent: #0891b2;
   --accent-2: #4f46e5;
   --accent-ink: #ffffff;
   --shadow: 0 8px 28px -16px rgba(15, 23, 42, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -369,6 +369,7 @@ textarea.input { min-height: 88px; resize: vertical; }
   .metric .v { font-size: 18px; }
   .apq .ring .gauge { width: 76px; }
 }
+:root[data-theme='light'] .tabbar a[aria-current='page'] { color: #0e7490; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }
