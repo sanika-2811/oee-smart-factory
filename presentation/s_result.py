@@ -34,22 +34,6 @@ def build(ctx):
         picture(s, im, x, y, pw_, ph_)
         tb(s, x, y + ph_ + 0.06, pw_, 0.28, cap, size=14, color=MUTED, align="c")
 
-    # ================================================================== 31  responsive & accessible
-    s = new("Responsive & Accessible by Design",
-            "The same dashboard works on a phone, with dark and light themes. It was audited with axe-core for WCAG 2 A and AA on every page, both themes, desktop and phone: zero violations. "
-            "It was also loaded in Chromium, Firefox and WebKit: all pages clean with no console errors and no sideways scrolling.")
-    phones = [("mobile_01_overview_normal.png", "Overview"), ("mobile_04_machines_alerts.png", "Machines"), ("mobile_06_alerts_centre.png", "Alerts")]
-    phh = 4.85
-    phw = phh * 780 / 1688
-    for i, (f, cap) in enumerate(phones):
-        x = X0 + i * (phw + 0.25)
-        picture(s, shots / f, x, 1.1, phw, phh)
-        tb(s, x, 1.1 + phh + 0.08, phw, 0.3, cap, size=13, color=MUTED, align="c")
-    bx = X0 + 3 * phw + 0.75
-    card(s, bx, 1.1, X1 - bx, 5.75, "green", "Built for everyone", ["Phone, tablet and desktop layouts – no sideways scrolling", "Dark and light themes", "Colour + icon + text label for every state",
-                                                                    "Keyboard navigation and ARIA labels (NFR-U2)", "axe-core: **0 violations** on all pages, both themes, desktop and phone",
-                                                                    "Chromium, Firefox and WebKit: all pages clean", "Offline banner, error screen, plain-language messages (NFR-U3)"], size=14, title_size=17)
-
     # ================================================================== 32  live demo
     s = new("Live Demo – Seven Steps",
             "Switch to the browser and follow the numbered steps; the whole demo takes about three minutes. Start the app first with scripts/dev.ps1 or docker compose up, then sign in as the Floor Manager. "
@@ -87,7 +71,7 @@ def build(ctx):
     cd = CategoryChartData()
     cd.categories = ["Dashboard update, p95\n0.51 s of 1 s", "ML inference, worst case\n19 ms of 200 ms", "MQTT recovery\n1.9 s of 5 s"]
     cd.add_series("Share of the SRS limit used", (51, 9.5, 38))
-    gf = s.shapes.add_chart(XL_CHART_TYPE.BAR_CLUSTERED, E(X0), E(3.0), E(6.1), E(3.85), cd)
+    gf = s.shapes.add_chart(XL_CHART_TYPE.BAR_CLUSTERED, E(X0), E(3.0), E(W), E(3.85), cd)
     ch = gf.chart
     ch.font.size, ch.font.name = Pt(12), FONT
     ch.has_legend = False
@@ -110,9 +94,6 @@ def build(ctx):
     ch.value_axis.major_gridlines.format.line.color.rgb = RGBColor(0xE2, 0xE8, 0xF0)
     ch.category_axis.tick_labels.font.size = Pt(12)
     ch.category_axis.reverse_order = True
-    card(s, X0 + 6.3, 3.0, W - 6.3, 3.85, "grey", "Also verified", ["**20 machines** run normally: p95 update 0.51 s", "**Databases:** alerts, acknowledgements, feedback and maintenance survive a backend restart",
-                                                                   "**Broker kill test:** backend reconnects and data resumes in 1.9 s", "Fault injection needs a login (HTTP 401 without)",
-                                                                   "Orange raised ≈ 28 s before Red at 85.3 °C"], size=15, title_size=18, gap=8)
 
     # ================================================================== 34  requirement traceability
     s = new("Requirement-to-Test Traceability (SRS §13.3)",
@@ -171,18 +152,36 @@ def build(ctx):
 
     box(s, X0, 6.3, W, 0.6, "The limitations are by design – they are the SRS constraints C-01 … C-07, not accidents.", fill="grey", edge="white", size=17, bold=True, color=GREEN_D)
 
-    # ================================================================== 36  conclusion & future scope
-    s = new("Conclusion & Future Scope",
-            "Conclusion: the system meets every numeric SRS target with measured evidence and is reproducible. Future scope: connect real equipment through OPC UA or Modbus, learn from operator feedback, add notifications, "
-            "predict remaining useful life with non-linear models, and support multiple sites.")
-    c2 = cols(2)
-    card(s, c2[0][0], 1.2, c2[0][1], 4.95, "green", "Conclusion", ["Live OEE and Red / Orange / Yellow alerts within about half a second", "Every numeric SRS target met, with measured evidence",
-                                                                  "ML validated on injected faults: 6 / 6 detected, no false alarms", "Complete, reproducible platform: one command, 45 tests, databases verified live"],
-         size=19, title_size=23, gap=16)
-    card(s, c2[1][0], 1.2, c2[1][1], 4.95, "blue", "Future scope", ["Real machines through OPC UA / Modbus → MQTT", "Retrain the model from operator feedback", "Notifications (email, SMS) and audit export",
-                                                                   "Remaining useful life with non-linear models", "Multi-site deployment and Grafana dashboards"], size=19, title_size=23, gap=16)
+    # ================================================================== 36  future scope
+    s = new("Future Scope",
+            "What comes next: connect real equipment through OPC UA or Modbus, learn from the operator feedback already collected, add notifications, predict remaining useful life with non-linear models, "
+            "and support several sites.")
+    fut = [("Real machines", "Connect real equipment through OPC UA / Modbus → MQTT"), ("Learn from feedback", "Retrain the model from the operators' true / false-positive feedback"),
+           ("Notifications", "Email and SMS alerts, audit export"), ("Predict wear", "Remaining useful life with non-linear models"),
+           ("Scale out", "Multi-site deployment and Grafana dashboards")]
+    fw = (W - 4 * 0.25) / 5
+    for i, (t_, d) in enumerate(fut):
+        x = X0 + i * (fw + 0.25)
+        box(s, x, 1.3, fw, 4.2, "", fill="blue", edge="blue")
+        badge(s, x + fw / 2, 2.0, 0.7, str(i + 1), size=22)
+        tb(s, x + 0.15, 2.65, fw - 0.3, 0.9, t_, size=18, bold=True, align="c", anchor="m")
+        tb(s, x + 0.15, 3.65, fw - 0.3, 1.7, d, size=15, align="c")
+        if i < 4:
+            line(s, x + fw + 0.02, 3.4, x + fw + 0.23, 3.4, color=INK, w=2)
+    box(s, X0, 5.85, W, 0.8, "Next milestone: connect one real machine and compare its OEE with the simulator.", fill="grey", edge="white", size=18, bold=True, color=GREEN_D)
 
-    box(s, X0, 6.3, W, 0.6, "Take-home: live OEE and a three-layer early warning – built to the SRS and verified by measurement.", fill="grey", edge="white", size=17, bold=True, color=GREEN_D)
+    # ================================================================== 36b  conclusion
+    s = new("Conclusion",
+            "Conclusion: the system meets every numeric SRS target with measured evidence and is reproducible. Live OEE and three alert layers, validated machine learning, and a complete one-command platform.")
+    concl = [("Live and early", "Live OEE and Red / Orange / Yellow alerts within about half a second", "green"),
+             ("Targets met", "Every numeric SRS target met, with measured evidence", "green"),
+             ("ML validated", "6 / 6 injected faults detected, no false alarms", "green"),
+             ("Reproducible", "One command, 45 tests, databases verified live", "green")]
+    for (x, w), (t_, d, col) in zip(cols(4), concl):
+        box(s, x, 1.3, w, 3.5, "", fill=col, edge=col)
+        tb(s, x + 0.2, 1.5, w - 0.4, 0.8, t_, size=22, bold=True, anchor="m")
+        tb(s, x + 0.2, 2.45, w - 0.4, 2.2, d, size=18)
+    box(s, X0, 5.2, W, 1.4, "Take-home: live OEE and a three-layer early warning – built to the SRS and verified by measurement.", fill="grey", edge="white", size=20, bold=True, color=GREEN_D)
 
     # ================================================================== 37  references
     s = new("References",

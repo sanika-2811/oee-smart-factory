@@ -65,8 +65,12 @@ def slide_number(s):
     t.text = "‹#›"
 
 
+SLIDE_TITLES: dict[int, str] = {}
+
+
 def new_slide(title: str, notes: str):
     s = prs.slides.add_slide(LAYOUT)
+    SLIDE_TITLES[s.slide_id] = title
     _strip_placeholders(s)
     K.set_current(title)
     tb(s, X0, 0.1, 10.9, 0.55, title, size=28, bold=True, color=WHITE, anchor="m")
@@ -77,8 +81,36 @@ def new_slide(title: str, notes: str):
 
 Ctx.new = staticmethod(new_slide)
 
+# The college template's agenda, in its own order; each section lists the slides (by title) that belong to it.
+SECTIONS = [
+    ("Introduction", ["The Project in 30 Seconds", "Introduction – What is OEE?"]),
+    ("Problem Statement", ["Problem Statement"]),
+    ("Objectives", ["Objectives", "UML – Use Case Diagram (SRS §7.2)"]),
+    ("Existing vs. Proposed System", ["Existing vs. Proposed System"]),
+    ("System Architecture", ["System Architecture", "Data Flow Diagram – Level 1 (Seven Processes)", "UML – Sequence Diagram (SRS §9.2)", "Database Design – ER Diagram (PostgreSQL)"]),
+    ("Methodology", ["Methodology"]),
+    ("Modules", ["Modules (SRS §3.2)", "UML – Class Diagram: 12 Domain Classes (SRS §8.3)", "Alert Decision Flow – Every 500 ms per Machine",
+                 "ML Anomaly Scoring – Isolation Forest", "What-If Degradation & Projection (FR-07)"]),
+    ("Technologies Used", ["Technologies Used", "Deployment – Docker Compose & Requirements (SRS §10–11)"]),
+    ("Implementation / Screenshots", ["Implementation – Dashboard Screens", "Live Demo – Seven Steps"]),
+    ("Results & Testing", ["Testing & Results", "Requirement-to-Test Traceability (SRS §13.3)"]),
+    ("Advantages & Applications", ["Advantages, Limitations & Applications"]),
+    ("Future Scope", ["Future Scope"]),
+    ("Conclusion", ["Conclusion"]),
+    ("References", ["References"]),
+]
+ORDER = [title for _, titles in SECTIONS for title in titles]
+
+
+def page_range(titles):
+    first = ORDER.index(titles[0]) + 3          # slide 1 = title, slide 2 = agenda
+    last = ORDER.index(titles[-1]) + 3
+    return f"slide {first}" if first == last else f"slides {first} – {last}"
+
+
 import s_intro   # noqa: E402
 import s_design  # noqa: E402
+import s_uml     # noqa: E402
 import s_result  # noqa: E402
 
 # ============================================================================ slide 1: template title
@@ -113,12 +145,7 @@ for sh in list(s2.shapes):
         sh._element.getparent().remove(sh._element)
 K.set_current("Agenda")
 tb(s2, X0, 0.1, 10.9, 0.55, "Agenda", size=28, bold=True, color=WHITE, anchor="m")
-agenda = [("Introduction & Problem Statement", "slides 3 – 5"), ("Objectives & Existing vs. Proposed", "slides 6 – 7"),
-          ("Users & Requirements (SRS)", "slides 8 – 9"), ("System Architecture & Data Flow", "slides 10 – 13"),
-          ("Methodology & Modules", "slides 14 – 15"), ("Technologies Used", "slide 16"), ("OEE, Alerts, ML & What-If", "slides 17 – 21"),
-          ("UML & Database Design", "slides 22 – 27"), ("Deployment & Run Modes", "slides 28 – 29"), ("Implementation / Screenshots", "slides 30 – 31"),
-          ("Live Demo", "slide 32"), ("Results, Testing & Traceability", "slides 33 – 34"), ("Advantages, Limitations & Applications", "slide 35"),
-          ("Conclusion, Future Scope & References", "slides 36 – 37")]
+agenda = [(name, page_range(titles)) for name, titles in SECTIONS]
 colw = (W - 0.4) / 2
 rows = 7
 rh = (Y1 - 1.25) / rows
@@ -136,14 +163,21 @@ s2.notes_slide.notes_text_frame.text = ("Roadmap in the order of the SRS: requir
 # ============================================================================ content slides
 s_intro.build(Ctx)
 s_design.build(Ctx)
+s_uml.build(Ctx)
 s_result.build(Ctx)
 
-# ============================================================================ template "Thank you" slide goes last
+# ============================================================================ order: title, agenda, sections in agenda order, thank-you
 sld = prs.slides._sldIdLst
 ids = list(sld)
-thank = ids[2]
-sld.remove(thank)
-sld.append(thank)
+first, agenda_id, thank = ids[0], ids[1], ids[2]
+by_title = {SLIDE_TITLES[int(e.get("id"))]: e for e in ids[3:]}
+missing = [x for x in ORDER if x not in by_title]
+extra = [x for x in by_title if x not in ORDER]
+assert not missing and not extra, f"slide titles out of sync - missing: {missing}  not in SECTIONS: {extra}"
+for e in ids:
+    sld.remove(e)
+for e in [first, agenda_id] + [by_title[x] for x in ORDER] + [thank]:
+    sld.append(e)
 for sh in prs.slides[len(prs.slides) - 1].shapes:
     if sh.has_text_frame and "Thank" in sh.text_frame.text:
         sh.text_frame.paragraphs[0].runs[0].text = "Thank You !!!  Questions?"
@@ -153,7 +187,12 @@ prs.slides[len(prs.slides) - 1].notes_slide.notes_text_frame.text = (
     "(normal tail about 70 percent, median anomaly about 95 percent). What if the broker or ML fails? (automatic reconnect; last score held; red rules keep working). "
     "What was verified on real databases? (PostgreSQL and InfluxDB in Docker: data written, read back and still there after a restart).")
 
-prs.save(str(OUT))
+try:
+    prs.save(str(OUT))
+except PermissionError:      # the file is open in PowerPoint: write a sibling instead of failing
+    OUT = OUT.with_name(OUT.stem + "_NEW.pptx")
+    prs.save(str(OUT))
+    print("NOTE: the main file is open in PowerPoint - saved a copy instead.")
 print("saved", OUT, "slides:", len(prs.slides))
 if K.WARNINGS:
     print("\nPOSSIBLE TEXT OVERFLOW (check these slides):")

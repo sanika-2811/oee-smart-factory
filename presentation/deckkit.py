@@ -258,12 +258,12 @@ def table_box(s, x, y, w, name, rows, color):
 
 
 # ----------------------------------------------------------------------------- pictures
-def picture(s, path_, x, y, w, h):
+def picture(s, path_, x, y, w, h, valign="m"):
     with Image.open(path_) as im:
         iw, ih = im.size
     sc = min(w / iw, h / ih)
     pw, ph = iw * sc, ih * sc
-    pic = s.shapes.add_picture(str(path_), E(x + (w - pw) / 2), E(y + (h - ph) / 2), E(pw), E(ph))
+    pic = s.shapes.add_picture(str(path_), E(x + (w - pw) / 2), E(y + ((h - ph) / 2 if valign == "m" else 0)), E(pw), E(ph))
     pic.line.color.rgb = EDGE["white"]
     pic.line.width = Pt(1)
     return pic
