@@ -67,7 +67,9 @@ class FakeInflux:
 
 @pytest.fixture
 def repo():
-    r = DbRepository(Settings(storage_mode="db", influx_token="t"))
+    # explicit values so the test never depends on the developer's own .env (cloud org, bucket names, ...)
+    r = DbRepository(Settings(storage_mode="db", influx_token="t", influx_url="http://localhost:8086", influx_org="oee-org",
+                              influx_bucket_raw="telemetry_raw", influx_bucket_agg="telemetry_agg"))
     r._pg, r._influx, r._write_api = FakePG(), FakeInflux(), FakeWriteApi()
     return r
 

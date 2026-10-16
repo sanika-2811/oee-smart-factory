@@ -43,6 +43,10 @@ Databases are **off by default**. To have Compose run them too: `docker compose 
 
 **Sign in** (top right) with a demo account to make changes: `manager / manager123`, `engineer / engineer123`, `analyst / analyst123`, `admin / admin123` (set in `.env`, `USERS=`). Reading is open to everyone. **Roles:** floor manager and administrator can do everything; maintenance engineer can acknowledge/resolve alerts, give feedback and log maintenance; production analyst is read-only. Five wrong passwords lock a login for 60 s. Set `DEMO_HINTS=false` and change `USERS` before sharing the app with anyone.
 
+## Deploy it online (GitHub + Render + Vercel)
+Backend (FastAPI + built-in simulator) on **Render**, frontend on **Vercel**, data in **Supabase** (PostgreSQL) and **InfluxDB Cloud**.
+Step-by-step guide: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) - the backend is described by [`render.yaml`](render.yaml); the frontend reads `VITE_API_BASE` at build time ([`frontend/.env.example`](frontend/.env.example)).
+
 ## Demo script (≈ 3 minutes)
 1. Open **Control**, sign in as `manager`.
 2. Pick `Welder-04` → **ML anomaly** → within ~3 s the tile turns **Yellow** (all values still below hard limits).

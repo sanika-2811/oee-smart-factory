@@ -53,7 +53,7 @@ class DbRepository(Repository):
     def start(self) -> None:
         s = self.s
         self._pg = create_engine(s.postgres_url, pool_pre_ping=True, pool_size=3, max_overflow=2,
-                                 connect_args={"connect_timeout": 3})
+                                 connect_args={"connect_timeout": s.postgres_connect_timeout_s})
         try:
             from influxdb_client import InfluxDBClient
             from influxdb_client.client.write_api import SYNCHRONOUS

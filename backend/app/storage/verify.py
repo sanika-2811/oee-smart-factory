@@ -21,7 +21,7 @@ def check_postgres(s) -> bool:
 
     print(f"\nPostgreSQL  ->  {s.postgres_user}@{s.postgres_host}:{s.postgres_port}/{s.postgres_db}")
     try:
-        eng = create_engine(s.postgres_url, connect_args={"connect_timeout": 4})
+        eng = create_engine(s.postgres_url, connect_args={"connect_timeout": s.postgres_connect_timeout_s})
         with eng.begin() as c:
             c.execute(text("SELECT 1"))
             say(True, "connected")

@@ -1,0 +1,55 @@
+# Render Blueprint: deploys the BACKEND (FastAPI + built-in simulator) from backend/Dockerfile.
+# The frontend is deployed separately on Vercel (see docs/DEPLOYMENT.md).
+# Values marked "sync: false" are secrets: Render asks you for them in the dashboard; they are never stored in Git.
+services:
+  - type: web
+    name: oee-backend
+    runtime: docker
+    plan: free
+    region: singapore              # close to a Supabase ap-south-1 database; change if yours is elsewhere
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .               # the backend imports the shared "simulator" package, so build from the repo root
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "8000"              # the Dockerfile listens on 8000
+      - key: INGEST_MODE
+        value: direct              # simulator runs inside the backend (no MQTT broker needed)
+      - key: MACHINE_COUNT
+        value: "5"
+      - key: BACKFILL_DAYS
+        value: "7"
+      - key: STORAGE_MODE
+        value: db
+      - key: LOG_LEVEL
+        value: INFO
+      # --- InfluxDB Cloud --------------------------------------------------
+      - key: INFLUX_URL
+        sync: false
+      - key: INFLUX_TOKEN
+        sync: false
+      - key: INFLUX_ORG
+        sync: false
+      - key: INFLUX_BUCKET_RAW
+        value: telemetry_raw
+      - key: INFLUX_BUCKET_AGG
+        value: telemetry_agg
+      # --- Supabase PostgreSQL (use the Session pooler host) ----------------
+      - key: POSTGRES_HOST
+        sync: false
+      - key: POSTGRES_PORT
+        value: "5432"
+      - key: POSTGRES_DB
+        value: postgres
+      - key: POSTGRES_USER
+        sync: false
+      - key: POSTGRES_PASSWORD
+        sync: false
+      # --- security for a PUBLIC site -------------------------------------
+      - key: USERS                 # user:password:role,...   roles: floor_manager, maintenance_engineer, production_analyst, system_administrator
+        sync: false
+      - key: DEMO_HINTS
+        value: "false"             # never show login hints on a public site
+      - key: CORS_ORIGINS          # your Vercel address, e.g. https://oee-dashboard.vercel.app (no trailing slash)
+        sync: false

@@ -24,3 +24,12 @@ presentation/_render/
 presentation/_tpl/
 presentation/_crops/
 report/figures/crops/
+
+# local backups of .env (may hold passwords)
+.env.*
+!.env.example
+
+# presentation build scratch
+presentation/_png/
+presentation/_work/
+~$*

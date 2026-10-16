@@ -71,6 +71,7 @@ class Settings(BaseSettings):
     postgres_db: str = "oee_db"
     postgres_user: str = "oee_user"
     postgres_password: str = ""
+    postgres_connect_timeout_s: int = 10   # remote hosts (e.g. Supabase) can need more than the old 3 s
 
     @property
     def resolved_mqtt_port(self) -> int:

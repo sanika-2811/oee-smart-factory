@@ -2,6 +2,8 @@
 # Creates a virtual environment OUTSIDE the OneDrive-synced folder, installs dependencies once,
 # then starts the backend (direct mode: simulator built in) and the React dev server.
 $ErrorActionPreference = "Stop"
+# npm launches scripts through %COMSPEC%; some machines have it pointing at a JDK folder, which breaks "npm run dev".
+$env:COMSPEC = Join-Path $env:SystemRoot "System32\cmd.exe"
 $root = Split-Path -Parent $PSScriptRoot
 $venv = Join-Path $env:USERPROFILE ".venvs\oee"
 $py = Join-Path $venv "Scripts\python.exe"
