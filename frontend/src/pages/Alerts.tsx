@@ -4,6 +4,9 @@ import { TopBar } from '../components/Layout'
 import { Empty, Skeleton } from '../components/ui'
 import { LEVELS } from '../lib/levels'
 import { useStore, EMPTY } from '../lib/store'
+import { downloadCsv } from '../lib/csv'
+import { dateTime } from '../lib/format'
+import { Icon } from '../components/ui'
 import { useNow } from '../hooks/hooks'
 import type { AlertLevel } from '../lib/types'
 
@@ -50,6 +53,13 @@ export default function Alerts() {
             </button>
           ))}
           <span style={{ flex: 1 }} />
+          <button
+            className="btn sm" disabled={filtered.length === 0} title="Download the filtered alerts as a CSV file"
+            onClick={() => downloadCsv('alerts.csv', [
+              ['id', 'level', 'machine', 'title', 'message', 'opened', 'status', 'active', 'acknowledged_by', 'technician', 'resolution_notes', 'feedback'],
+              ...filtered.map((a) => [a.id, a.level, a.machine_id, a.title, a.message, dateTime(a.opened_at), a.status, a.active ? 'yes' : 'no', a.acked_by, a.technician, a.resolution_notes, a.feedback?.verdict]),
+            ])}
+          ><Icon name="inbox" />Export CSV</button>
           <label className="sr-only" htmlFor="st">Status</label>
           <select id="st" className="input" style={{ width: 'auto' }} value={status} onChange={(e) => setStatus(e.target.value as StatusFilter)}>
             <option value="all">Any status</option>
